@@ -2,10 +2,13 @@ package http
 
 import (
 	"crypto/tls"
+	"net/http"
+	"net/url"
+	"os"
+
 	"github.com/ArtisanCloud/PowerLibs/v3/fmt"
 	"github.com/ArtisanCloud/PowerLibs/v3/http/contract"
 	"github.com/pkg/errors"
-	"net/http"
 )
 
 // Client 是 net/http 的封装
@@ -22,6 +25,14 @@ func NewHttpClient(config *contract.ClientConfig) (*Client, error) {
 	coreClient := http.Client{
 		Timeout: config.Timeout,
 	}
+	if proxy := os.Getenv("WeChatProxy"); proxy != "" {
+		proxyUrl, err := url.Parse(proxy)
+		if err != nil {
+			return nil, err
+		}
+		coreClient.Transport = &http.Transport{Proxy: http.ProxyURL(proxyUrl)}
+	}
+
 	if config.Cert.CertFile != "" && config.Cert.KeyFile != "" {
 		certPair, err := tls.LoadX509KeyPair(config.Cert.CertFile, config.Cert.KeyFile)
 		if err != nil {
